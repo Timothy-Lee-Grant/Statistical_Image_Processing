@@ -7,14 +7,33 @@ np.random.seed(95)
 def main():
   lambdaVal = 0.02
   stepSize = 0.01
+
+  #load training data's input vector
   mat_contents = sio.loadmat('MNIST_train_image.mat')
   train_img = mat_contents['trainX']
+  #load the labels of each of the images (label indicates the value which the image actually is)
   mat_contents = sio.loadmat('MNIST_train_label.mat')
   trainLabel = mat_contents['trainL']
 
+
+  #At this piont I have two arrays, one is train_img and the other is trainLabel
+  #train_img is
+  #trainLabel is an array corresponding to the each element is the actual value of the ith train_img
+  ##Testing
+  #print(mat_contents)
+  #print(f"train_img: {train_img} \n {np.shape(train_img)}")
+  #print(f"trainLabel: {trainLabel} \n {np.shape(trainLabel)}")
+  #return
+  ##End Testing
+
+  #train_img (784X60000)
+  #tranLabel (60000X1)
+
+  # **Review** What does this 'splitData' do?
   trainData, testData, trainL, testL = splitData(train_img, trainLabel)
 
   #create nxn matrix of trigger fucntions
+  # **Review** what is a trigger function?
   onMatrix = findTriggerMatrix(trainL)
 
   #add bias value of 1 to each of the instances of the training and testing
@@ -29,6 +48,7 @@ def main():
   #itterate over the gradient direction
   for i in range(1000):
     if i % 100 == 0:
+      # **Review** what is crossEntropyLoss
       weightVector, crossEntropyLoss = findGradient(trainData, weightVector, onMatrix, stepSize, lambdaVal, 1)
       crossEntropyLossList.append(crossEntropyLoss)
       x_axis.append(i)
@@ -42,7 +62,7 @@ def main():
   plt.show()
 
   #make prediction
-  #create a v
+  # **Review** this must be following an equation given in the notes
   probabilityVector = np.transpose(testData) @ weightVector
   print(probabilityVector.shape)
 
@@ -54,7 +74,9 @@ def main():
 
 
   
-
+#Gradient will point in the direction of greatest assent
+# Loss Function: L(W,B) = (1/|T|)* sum (for all training examples) (yi - f(xi;W,B))^2
+# The Loss Function is taking an average of the entire dataset where each training example is measured from the amount which the actual output is (yi) from the predicted model output given our parameters
 def findGradient(dataSet, weightVector, onMatrix, stepSize, lambdaVal, entropyNeeded = 0):
   
   #first compute the addition between the weights and the features
@@ -87,6 +109,8 @@ def findGradient(dataSet, weightVector, onMatrix, stepSize, lambdaVal, entropyNe
   return weightVector, crossEntropyLoss
   
 
+#Cross Entropy is a metric to mesure the quality of the predicted classification's probabilities
+#Cross Entropy is a good method to due to it is non-linear, meaning the derivate will take a bigger "step" when the prediction is "more wrong"
 def CaculateCrossEntropyLoss(onMatrix, exponentMatrix):
   #calculate cross entropy loss function
   crossEntropyLoss = np.sum(np.sum(onMatrix@(np.log(exponentMatrix))))
@@ -97,16 +121,27 @@ def CaculateCrossEntropyLoss(onMatrix, exponentMatrix):
 
 
 
-
+#I forgot what I was doing with this function
+#Trigger matrix must have something to do with on the matrix half of the data is repeated?
+#Fills matrix of size dataX10 of 0s, then fills the 
+#data: (47988, 1)     It is the # of training examples with each element the label of the particular instance
 def findTriggerMatrix(data):
+
+  #onMatrix: (# of train images, 10)
   onMatrix = np.zeros((len(data),10))
+
+  #UNotes: Loops through each of the train image #s
+  #  Then each itteration we are changing the content of one element in the onMatrix
+  #  We are changing the ith (so corresponding to the # of the training example) and the 
+  #  onMatrix will be a matrix for each of the training examples, where all of the contents are 0 except for the index which corresponds to the label which the instance actually is
   for i in range(len(data)):
     onMatrix[i][data[i]] = 1
   return onMatrix
 
 
 
-
+#train_img (784X60000)
+#tranLabel (60000X1)
 def splitData(data, label):
   trainArray = []
   trainLabel = []
@@ -115,7 +150,8 @@ def splitData(data, label):
 
   data = np.transpose(data)
 
-  #initialize random variable
+  #split data into two categories: Training and Testing
+  #where training has 80% of the data and testing has 20%
   for i in range(len(data)):
     RV = np.random.binomial(1,0.8)
     if RV == 1:
@@ -124,13 +160,16 @@ def splitData(data, label):
     if RV == 0:
       testArray.append(data[i])
       testLabel.append(label[i])
+
+  #print(f"trainArray: {np.shape(trainArray)}")
+  #raise SystemExit
   
   trainData = np.array(trainArray)
   trainLabels = np.array(trainLabel)
   testData = np.array(testArray)
   testLabels = np.array(testLabel)
 
-
+  #why did I transpose these to get back into that strange situation of rows being the pixels and columns being each of the images?
   trainData = np.transpose(trainData)
   testData = np.transpose(testData)
   return trainData, testData, trainLabels, testLabels
