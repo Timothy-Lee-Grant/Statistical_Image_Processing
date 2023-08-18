@@ -55,7 +55,8 @@ def main():
   triggerMatrix = CreateTriggerMatrix(trainL)
 
   #probability matrix (might need to keep calling this function)
-  probabilityMatrix = FillInProbabilityMatrix(inputParameters[2], betaParameters)
+  #probabilityMatrix = FillInProbabilityMatrix(inputParameters[:,1], betaParameters)
+  betaParameters = PerformGradientDecent(betaParameters, triggerMatrix, inputParameters)
 
   exit()
 
@@ -74,6 +75,16 @@ def main():
     prediction[i] = np.argmax(probabilityVector[i])
 
 
+def PerformGradientDecent(betaParameters, triggerMatrix, inputParameters):
+  print(f"inputParameters.shape: {inputParameters.shape}")
+  print(f"betaParameters.shape: {betaParameters.shape}")
+  #First fill out the equation for the probability matrix
+  #Starting get the exponent, where each exponent is the betaPara multiplies by the pixel
+  #At end of this line, 10X50K matrix.
+  #  Row of each class, column of each of the training example
+  probabilityMatrix = np.transpose(betaParameters) @ inputParameters
+
+
 
 
 def FillInProbabilityMatrix(inputParameters, betaParameters):
@@ -82,12 +93,16 @@ def FillInProbabilityMatrix(inputParameters, betaParameters):
   print(betaParameters.shape)
   betaParameters = betaParameters.transpose()
   print(betaParameters.shape)
+  print(inputParameters.shape)
   #first find the sum
   i = 1
   sumValue = 0
   for i in range(numberOfClasses):
-    #sumValue += betaParameters[i]@inputParameters
-    pass
+    sumValue += np.exp( np.sum(betaParameters[i]@inputParameters) )
+  #np.sum(betaParameters[i]@inputParameters)
+
+  print(f"here it is {sumValue}")
+    
 
   return None
 
@@ -101,12 +116,6 @@ def CreateTriggerMatrix(trainL):
     triggerMatrix[i][trainL[i]] = 1
     
   return triggerMatrix
-
-
-
-
-
-
 
 
 #train_img (784X60000)
