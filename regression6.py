@@ -84,6 +84,18 @@ def PerformGradientDecent(betaParameters, triggerMatrix, inputParameters):
   #  Row of each class, column of each of the training example
   probabilityMatrix = np.transpose(betaParameters) @ inputParameters
 
+  #Put each element as an exponent (as specified by the formula)
+  probabilityMatrix = np.exp(probabilityMatrix)
+
+  #Now I need to divide by the sum of the classes
+  #Nieve way would be to do 50k summations and then divide
+  # **CHECK** This is probably incorrect
+  #Idea is to sum up each of the columns, and for each element in the probMat divide by that associated sum term
+  probabilityMatrix = probabilityMatrix / np.sum(probabilityMatrix, axis=0)
+
+  print(f"probabilityMatrix.shape: {probabilityMatrix.shape}")
+
+
 
 
 
