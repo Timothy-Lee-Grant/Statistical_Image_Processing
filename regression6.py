@@ -4,6 +4,8 @@ import math
 import matplotlib.pyplot as plt
 np.random.seed(95)
 
+stepSize = 0.001
+
 def main():
   lambdaVal = 0.02
   stepSize = 0.01
@@ -40,30 +42,37 @@ def main():
   betaParameters = np.ones((numberOfPixels + 1, numberOfClasses))
 
   inputParameters = trainData
-  print(inputParameters.shape)
-  print(inputParameters)
   #I want to insert a 1 into the first row
   numberOfTrainingPoints = inputParameters.shape[1]
-  print(f" here is the number: {numberOfTrainingPoints}")
   onesVector = np.ones((1,numberOfTrainingPoints))
-  print(onesVector.shape)
   inputParameters = np.insert(inputParameters, 0, onesVector, axis=0)
-  print(inputParameters.shape)
-  print(inputParameters)
 
   #create trigger matrix
   triggerMatrix = CreateTriggerMatrix(trainL)
 
   #probability matrix (might need to keep calling this function)
   #probabilityMatrix = FillInProbabilityMatrix(inputParameters[:,1], betaParameters)
-  betaParameters = PerformGradientDecent(betaParameters, triggerMatrix, inputParameters)
+  #betaParameters, crossEntropyLoss = PerformGradientDecent(betaParameters, triggerMatrix, inputParameters)
 
-  exit()
+
+  #Keep itterating through gradient decent until stopping criteia
+  #Each itteration keep track of the cross entropy loss to be able to plot over intervals
+  x_axis = []
+  crossEntropyLossList = []
+  for i in range(20):
+    betaParameters, crossEntropyLoss = PerformGradientDecent(betaParameters, triggerMatrix, inputParameters)
+    x_axis.append(i)
+    crossEntropyLossList.append(crossEntropyLoss)
+    print(f"{i}: {crossEntropyLoss}")
+
+  #exit()
 
   plt.xlabel('Itteration Number')
   plt.ylabel('Loss Value')
   plt.plot(x_axis,crossEntropyLossList)
   plt.show()
+
+  exit()
 
   #make prediction
   # **Review** this must be following an equation given in the notes
@@ -76,13 +85,17 @@ def main():
 
 
 def PerformGradientDecent(betaParameters, triggerMatrix, inputParameters):
-  print(f"inputParameters.shape: {inputParameters.shape}")
-  print(f"betaParameters.shape: {betaParameters.shape}")
+  
+  numberOfSamples =  inputParameters.shape[1]
+
   #First fill out the equation for the probability matrix
   #Starting get the exponent, where each exponent is the betaPara multiplies by the pixel
   #At end of this line, 10X50K matrix.
   #  Row of each class, column of each of the training example
   probabilityMatrix = np.transpose(betaParameters) @ inputParameters
+
+  #saving for CrossEntropyLoss
+  nonExponential = probabilityMatrix
 
   #Put each element as an exponent (as specified by the formula)
   probabilityMatrix = np.exp(probabilityMatrix)
@@ -93,8 +106,30 @@ def PerformGradientDecent(betaParameters, triggerMatrix, inputParameters):
   #Idea is to sum up each of the columns, and for each element in the probMat divide by that associated sum term
   probabilityMatrix = probabilityMatrix / np.sum(probabilityMatrix, axis=0)
 
-  print(f"probabilityMatrix.shape: {probabilityMatrix.shape}")
+  gradientMatrix = (-1/numberOfSamples) * inputParameters @ (triggerMatrix - np.transpose(probabilityMatrix) )
+  
+  #I now created the gradient matrix according to the equations in the notes
+  #now I need to take those betaParameters (the values used to predicted) and move them in the direction of the gradient
+  betaParameters = betaParameters - (stepSize * gradientMatrix)
 
+  print("about to calculate the CEL")
+
+  #calculate cross entropy loss
+  #CEL is defined as -(1/n) * sum over all samples * sum over all classes (trigger matrix * ln (probmatrix))
+  crossEntropyLoss = triggerMatrix @ nonExponential
+  print(f"triggerMatrix.shape: {triggerMatrix.shape}")
+  print(f"nonExponential.shape: {nonExponential.shape}")
+  #crossEntropyLoss = nonExponential
+  print("first")
+  crossEntropyLoss = np.sum(crossEntropyLoss, axis=0)
+  print("second")
+  print(f"crossEntropyLoss.shape: {crossEntropyLoss.shape}")
+  crossEntropyLoss = np.sum(crossEntropyLoss)
+  print("third")
+  crossEntropyLoss = (-1/numberOfSamples) * crossEntropyLoss
+  print("fourth")
+
+  return betaParameters, crossEntropyLoss
 
 
 
